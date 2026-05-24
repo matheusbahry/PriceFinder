@@ -1,0 +1,227 @@
+{
+  "info": {
+    "_postman_id": "0206c031-032f-438c-87c3-bbf1a1898da4",
+    "name": "ByteFisher",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "39727869",
+    "_collection_link": "https://go.postman.co/collection/39727869-0206c031-032f-438c-87c3-bbf1a1898da4?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "raw-api",
+      "item": [
+        {
+          "name": "Authorization-Code-Exchange",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "accept",
+                "value": "application/json"
+              },
+              {
+                "key": "content-type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "type": "text",
+                  "key": "grant_type",
+                  "value": "authorization_code"
+                },
+                {
+                  "type": "text",
+                  "key": "client_id",
+                  "value": "8173965661050144"
+                },
+                {
+                  "type": "text",
+                  "key": "client_secret",
+                  "value": "EBk1n3DtSeJlClGbqfDMThyJHg9Ok9CZ"
+                },
+                {
+                  "type": "text",
+                  "key": "code",
+                  "value": "TG-69bca238e5e85e00019beb4e-3262848159"
+                },
+                {
+                  "type": "text",
+                  "key": "redirect_uri",
+                  "value": "https://www.angelsdev.com.br/"
+                },
+                {
+                  "type": "text",
+                  "key": "code_verifier",
+                  "value": "$CODE_VERIFIER"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://api.mercadolibre.com/oauth/token",
+              "protocol": "https",
+              "host": [
+                "api",
+                "mercadolibre",
+                "com"
+              ],
+              "path": [
+                "oauth",
+                "token"
+              ]
+            },
+            "description": "Generated from cURL: curl -X POST \\\r\n-H 'accept: application/json' \\\r\n-H 'content-type: application/x-www-form-urlencoded' \\\r\n'https://api.mercadolibre.com/oauth/token' \\\r\n-d 'grant_type=authorization_code' \\\r\n-d 'client_id=$APP_ID' \\\r\n-d 'client_secret=$SECRET_KEY' \\\r\n-d 'code=$SERVER_GENERATED_AUTHORIZATION_CODE' \\\r\n-d 'redirect_uri=$REDIRECT_URI' \\\r\n-d 'code_verifier=$CODE_VERIFIER' "
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh-Token_Exchange",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "accept",
+                "value": "application/json"
+              },
+              {
+                "key": "content-type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "type": "text",
+                  "key": "grant_type",
+                  "value": "refresh_token"
+                },
+                {
+                  "type": "text",
+                  "key": "client_id",
+                  "value": "8173965661050144"
+                },
+                {
+                  "type": "text",
+                  "key": "client_secret",
+                  "value": "EBk1n3DtSeJlClGbqfDMThyJHg9Ok9CZ"
+                },
+                {
+                  "type": "text",
+                  "key": "refresh_token",
+                  "value": "TG-69b36cde85005d0001ed42c8-3262848159"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://api.mercadolibre.com/oauth/token",
+              "protocol": "https",
+              "host": [
+                "api",
+                "mercadolibre",
+                "com"
+              ],
+              "path": [
+                "oauth",
+                "token"
+              ]
+            },
+            "description": "Generated from cURL: curl -X POST \\\r\n-H 'accept: application/json' \\\r\n-H 'content-type: application/x-www-form-urlencoded' \\\r\n'https://api.mercadolibre.com/oauth/token' \\\r\n-d 'grant_type=refresh_token' \\\r\n-d 'client_id=$APP_ID' \\\r\n-d 'client_secret=$SECRET_KEY' \\\r\n-d 'refresh_token=$REFRESH_TOKEN'"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "saveToken",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"accessToken\": \"APP_USR-8173965661050144-031921-dae52e12dc241b0b945e2b7ae77273ce-3262848159\",\r\n  \"refreshToken\": \"TG-69bca2855a1c350001ee1ff7-3262848159\",\r\n  \"expiresIn\": 21600\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/test/token",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "test",
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "getToken",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8081/token/0db9b6f9-b2ca-4dee-a05d-c4a56b3ed33f",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "token",
+            "0db9b6f9-b2ca-4dee-a05d-c4a56b3ed33f"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "getAllTokens",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8081/test/all",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "test",
+            "all"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "refreshToken",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8081/4d436c2b-0031-4cef-abfe-92eefe2e9ae7/refresh",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "4d436c2b-0031-4cef-abfe-92eefe2e9ae7",
+            "refresh"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
