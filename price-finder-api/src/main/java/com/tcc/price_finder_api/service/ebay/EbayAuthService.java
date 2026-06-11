@@ -27,6 +27,20 @@ public class EbayAuthService {
     @Value("${ebay.api.client-secret}")
     private String clientSecret;
 
+    /**
+     * Path relativo ao baseUrl "https://api.ebay.com":
+     * ebay.url.auth-token=/identity/v1/oauth2/token
+     */
+    @Value("${ebay.url.auth-token}")
+    private String AUTH_TOKEN;
+
+    /**
+     * Escopo enviado no body da requisição de token:
+     * ebay.url.auth-scope=https://api.ebay.com/oauth/api_scope
+     */
+    @Value("${ebay.url.auth-scope}")
+    private String AUTH_SCOPE;
+
     public EbayAuthService(
             @Qualifier("ebayWebClient") WebClient webClient
     ) {
@@ -36,26 +50,16 @@ public class EbayAuthService {
     private final AtomicReference<TokenHolder> tokenCache =
             new AtomicReference<>();
 
-    // =========================================
-    // 🚀 BUSCA TOKEN AO INICIAR A APLICAÇÃO
-    // =========================================
-
     @PostConstruct
     public void init() {
         requestNewToken()
                 .doOnNext(tokenCache::set)
-                .subscribe(); // necessário em código imperativo
+                .subscribe();
     }
 
-    // =========================================
-    // ⏱️ RENOVAÇÃO AUTOMÁTICA
-    // =========================================
-
-    @Scheduled(fixedDelay = 300_000) // a cada 5 minutos
+    @Scheduled(fixedDelay = 300_000)
     public void refreshTokenIfNeeded() {
-
         TokenHolder holder = tokenCache.get();
-
         if (holder == null || holder.isAboutToExpire()) {
             requestNewToken()
                     .doOnNext(tokenCache::set)
@@ -63,41 +67,29 @@ public class EbayAuthService {
         }
     }
 
-    // =========================================
-    // 🔐 OBTER TOKEN ATUAL
-    // =========================================
-
     public Mono<String> getValidToken() {
-
         TokenHolder holder = tokenCache.get();
-
         if (holder != null && !holder.isExpired()) {
             return Mono.just(holder.accessToken());
         }
-
         return requestNewToken()
                 .doOnNext(tokenCache::set)
                 .map(TokenHolder::accessToken);
     }
 
-    // =========================================
-    // 🌐 CHAMADA OAuth eBay
-    // =========================================
-
     private Mono<TokenHolder> requestNewToken() {
-
         String basicAuth = Base64.getEncoder().encodeToString(
                 (clientId + ":" + clientSecret)
                         .getBytes(StandardCharsets.UTF_8)
         );
 
         return webClient.post()
-                .uri("https://api.ebay.com/identity/v1/oauth2/token")
+                .uri(AUTH_TOKEN)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .header("Authorization", "Basic " + basicAuth)
                 .bodyValue(
                         "grant_type=client_credentials" +
-                                "&scope=https://api.ebay.com/oauth/api_scope"
+                                "&scope=" + AUTH_SCOPE
                 )
                 .retrieve()
                 .bodyToMono(EbayTokenResponse.class)
@@ -107,17 +99,15 @@ public class EbayAuthService {
                 ));
     }
 
-    @Scheduled(fixedRate = 60 * 60 * 1000) // 1 hora
+    @Scheduled(fixedRate = 60 * 60 * 1000)
     public void refreshTokenHourly() {
-
         requestNewToken()
                 .doOnNext(token -> {
                     tokenCache.set(token);
-                    System.out.println("🔄 Token eBay renovado automaticamente");
+                    System.out.println("Token eBay renovado automaticamente");
                 })
                 .doOnError(err ->
-                        System.err.println("❌ Falha ao renovar token: " + err.getMessage()))
-                .subscribe(); // 🔥 ESSENCIAL em WebFlux
+                        System.err.println("Falha ao renovar token: " + err.getMessage()))
+                .subscribe();
     }
-
 }

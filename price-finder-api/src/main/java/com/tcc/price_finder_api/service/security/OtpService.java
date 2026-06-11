@@ -18,9 +18,6 @@ public class OtpService {
         this.repository = repository;
     }
 
-    /**
-     * Gera um código OTP de 6 dígitos
-     */
     public String generateCode() {
         return String.valueOf(
                 ThreadLocalRandom.current()
@@ -28,9 +25,6 @@ public class OtpService {
         );
     }
 
-    /**
-     * Salva o código OTP no banco
-     */
     public Mono<TwoFactorCode> saveCode(
             UUID userId,
             String code
@@ -51,9 +45,6 @@ public class OtpService {
         return repository.save(otp);
     }
 
-    /**
-     * Valida o OTP
-     */
     public Mono<Boolean> validate(
             UUID userId,
             String code
@@ -64,22 +55,18 @@ public class OtpService {
 
                 .flatMap(otp -> {
 
-                    // código já usado
                     if (otp.isUsed()) {
                         return Mono.just(false);
                     }
 
-                    // código expirado
                     if (otp.getExpiresAt().isBefore(Instant.now())) {
                         return Mono.just(false);
                     }
 
-                    // código inválido
                     if (!otp.getCode().equals(code)) {
                         return Mono.just(false);
                     }
 
-                    // marca como usado
                     otp.setUsed(true);
 
                     return repository.save(otp)

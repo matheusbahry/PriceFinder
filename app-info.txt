@@ -1,9 +1,0 @@
-app-id:8173965661050144
-
-secret-key:EBk1n3DtSeJlClGbqfDMThyJHg9Ok9CZ
-
-redirect-uri:https://auth.mercadolivre.com/authorization?response_type=code&client_id=$APP_ID&redirect_uri=
-
-authorization-code:TG-69c1fdaa43452b0001b3c8d1-3262848159
-
-refresh-token:TG-69c19ac7f14bf30001cb4f2d-3262848159

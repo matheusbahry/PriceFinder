@@ -16,17 +16,16 @@ public class EmailService {
     @Value("${resend.api-key}")
     private String apiKey;
 
-    public EmailService(WebClient.Builder builder) {
-
+    public EmailService(
+            WebClient.Builder builder,
+            @Value("${resend.URL}") String resendUrl
+    ) {
         this.webClient = builder
-                .baseUrl("https://api.resend.com")
+                .baseUrl(resendUrl)
                 .build();
     }
 
-    public Mono<Void> sendCode(
-            String to,
-            String code
-    ) {
+    public Mono<Void> sendCode(String to, String code) {
 
         Map<String, Object> body = Map.of(
                 "from", "onboarding@resend.dev",
@@ -42,10 +41,7 @@ public class EmailService {
 
         return webClient.post()
                 .uri("/emails")
-                .header(
-                        "Authorization",
-                        "Bearer " + apiKey
-                )
+                .header("Authorization", "Bearer " + apiKey)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(Void.class);

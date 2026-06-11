@@ -1,28 +1,31 @@
 package com.tcc.price_finder_api.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
-// Entidade que representa as configurações do "client" para consumir a api do mercado livre
-
 @Configuration
 public class WebClientConfig {
 
-    // 🟡 Mercado Livre
+    @Value("${mbl.website}")
+    private String MBL_WEBSITE;
+
+    @Value("${ebay.website}")
+    private String EBAY_WEBSITE;
+
     @Bean
     public WebClient mercadoLivreWebClient(WebClient.Builder builder) {
         return builder
-                .baseUrl("https://api.mercadolibre.com")
+                .baseUrl(MBL_WEBSITE)
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }
 
-    // 🔵 eBay
     @Bean
     public WebClient ebayWebClient(WebClient.Builder builder) {
         return builder
-                .baseUrl("https://api.ebay.com")
+                .baseUrl(EBAY_WEBSITE)
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }

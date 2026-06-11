@@ -4,9 +4,6 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-
-// Entidade que representa a configuração da api do mercado livre
-
 @Data
 @Component
 @ConfigurationProperties(prefix = "mercado-livre")

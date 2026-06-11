@@ -12,7 +12,6 @@ public class EbayAuthController {
 
     private final EbayAuthService authService;
 
-    // 🔐 Obter token atual (ou gerar novo)
     @GetMapping("/token")
     public Mono<String> getToken() {
         return authService.getValidToken();

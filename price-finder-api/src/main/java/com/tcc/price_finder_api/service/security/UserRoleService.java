@@ -24,9 +24,6 @@ public class UserRoleService {
         this.userRoleRepository = userRoleRepository;
     }
 
-    /**
-     * Associa um usuário a uma role (se ainda não existir)
-     */
     public Mono<UserRole> assignRole(
             UUID userId,
             UUID roleId
@@ -88,33 +85,19 @@ public class UserRoleService {
                 });
     }
 
-    /**
-     * Lista todas as roles de um usuário
-     */
     public Flux<UserRole> findByUserId(UUID userId) {
         return userRoleRepository.findByUserId(userId);
     }
 
-    /**
-     * Lista todos os usuários que possuem determinada role
-     */
     public Flux<UserRole> findByRoleId(UUID roleId) {
         return userRoleRepository.findByRoleId(roleId);
     }
-
-    /**
-     * Verifica se um usuário possui uma role específica
-     */
     public Mono<Boolean> hasRole(UUID userId, UUID roleId) {
 
         return userRoleRepository
                 .findByUserIdAndRoleId(userId, roleId)
                 .hasElements();
     }
-
-    /**
-     * Remove todas as roles de um usuário
-     */
     public Mono<Void> deleteByUserId(UUID userId) {
         return userRoleRepository.deleteByUserId(userId);
     }

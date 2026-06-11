@@ -12,7 +12,6 @@ import com.tcc.price_finder_api.service.security.UserRoleService;
 import com.tcc.price_finder_api.service.security.UserService;
 import com.tcc.price_finder_api.util.JWTUtil;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -4,6 +4,8 @@ import { Trash2, User, ShieldAlert } from 'lucide-react'
 
 import { useAuthStore } from '../store/useAuthStore'
 
+import Navbar from "../components/Navbar";
+
 export default function ProfilePage() {
 
   const navigate = useNavigate()
@@ -40,6 +42,10 @@ export default function ProfilePage() {
   }
 
   return (
+
+  <div className="p-6 space-y-6">
+
+    <Navbar />
 
     <div
       className="
@@ -287,5 +293,6 @@ export default function ProfilePage() {
       </div>
 
     </div>
+  </div>
   )
 }

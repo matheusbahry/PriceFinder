@@ -5,6 +5,7 @@ import com.tcc.price_finder_api.dto.ml.token.OAuthTokenResponse;
 import com.tcc.price_finder_api.model.api.MercadoLivreToken;
 import com.tcc.price_finder_api.repo.api.MercadoLivreTokenRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,8 +16,6 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.util.UUID;
 
-// Classe de serviços que cuida da lógica de negócio dos tokens da api do mercado livre.
-
 @Service
 public class MercadoLivreAuthService {
 
@@ -24,13 +23,14 @@ public class MercadoLivreAuthService {
     private final MercadoLivreConfig config;
     private final MercadoLivreTokenRepository repository;
 
+    @Value("${mlb.auth-token}")
+    private String AUTH_TOKEN_URL;
+
     public MercadoLivreAuthService(@Qualifier("mercadoLivreWebClient") WebClient webClient, MercadoLivreConfig config, MercadoLivreTokenRepository repository) {
         this.webClient = webClient;
         this.config = config;
         this.repository = repository;
     }
-
-    //Solicita o refresh token
 
     public Mono<MercadoLivreToken> refreshToken(UUID id) {
 
@@ -40,7 +40,7 @@ public class MercadoLivreAuthService {
                 ))
                 .flatMap(saved ->
                         webClient.post()
-                                .uri("https://api.mercadolibre.com/oauth/token")
+                                .uri(AUTH_TOKEN_URL)
                                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                                 .body(BodyInserters.fromFormData("grant_type", "refresh_token")
                                         .with("client_id", config.getAppId())
@@ -51,8 +51,6 @@ public class MercadoLivreAuthService {
                                 .flatMap(resp -> updateAndSave(saved, resp))
                 );
     }
-
-    // Atualiza o token
 
     private Mono<MercadoLivreToken> updateAndSave(
             MercadoLivreToken token,
@@ -66,8 +64,6 @@ public class MercadoLivreAuthService {
 
         return repository.save(token);
     }
-
-    // Acessa a base de dados e procura por um toekn de acesso válido
 
     public Mono<String> getValidAccessToken(UUID id) {
 
@@ -88,8 +84,6 @@ public class MercadoLivreAuthService {
                             .map(MercadoLivreToken::getAccessToken);
                 });
     }
-
-    // Faz chamdas agendadas automaticamente para a api do mercado livre para renovar o refresh token.
 
     @Scheduled(fixedDelay = 300000)
     public void refreshNearExpiration() {

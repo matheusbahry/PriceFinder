@@ -5,18 +5,19 @@ import { useProductStore } from "../store/useProductStore";
 import { useFavoriteStore } from "../store/useFavoriteStore";
 import { useAuthStore } from "../store/useAuthStore";
 import Navbar from "../components/Navbar";
-export default function PriceSearch() {
 
+export default function PriceSearch() {
   const [query, setQuery] = useState("");
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchMessage, setSearchMessage] = useState("");
 
   const {
     products,
     loading,
     error,
-    searchByPriceRange
+    searchByPriceRange,
   } = useProductStore();
 
   const {
@@ -25,29 +26,53 @@ export default function PriceSearch() {
     isFavorite,
   } = useFavoriteStore();
 
-  // 🔐 Usuário autenticado
   const user = useAuthStore((state) => state.user);
-
-  // ✅ ID do usuário vindo do authStore
   const userId = user?.id;
 
   useEffect(() => {
-
     if (!userId) return;
-
     fetchFavorites(userId);
-
   }, [userId]);
 
   const handleSearch = async () => {
-
     if (!query || !min || !max) return;
 
-    await searchByPriceRange(query, min, max);
+    const MAX_RETRIES = 15;
+
+    setSearchMessage("Buscando produtos...");
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        await searchByPriceRange(query, min, max);
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        const currentProducts =
+          useProductStore.getState().products;
+
+        if (currentProducts.length > 0) {
+          setSearchMessage("");
+          return;
+        }
+
+        if (attempt < MAX_RETRIES) {
+          setSearchMessage(
+            `Nenhum resultado encontrado. Tentando novamente (${attempt}/${MAX_RETRIES})...`
+          );
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    setSearchMessage(
+      "Não foi possível encontrar produtos para esta busca. Tente outro termo ou faixa de preço."
+    );
   };
 
   const handleToggleFavorite = async (productUrl) => {
-
     if (!userId) {
       alert("Você precisa estar logado");
       return;
@@ -58,12 +83,9 @@ export default function PriceSearch() {
 
   return (
     <div className="p-6 space-y-6">
+      <Navbar />
 
-    <Navbar />
-
-      {/* 🔎 Filtros */}
       <div className="flex flex-wrap gap-2 justify-center">
-
         <input
           type="text"
           placeholder="Produto (ex: iphone)"
@@ -96,27 +118,30 @@ export default function PriceSearch() {
         </button>
       </div>
 
-      {/* ⚠️ Erro */}
+      {searchMessage && (
+        <div className="alert alert-info">
+          {searchMessage}
+        </div>
+      )}
+
       {error && (
         <div className="alert alert-error text-sm">
           {error}
         </div>
       )}
 
-      {/* ⏳ Loading */}
       {loading && (
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-3 py-8">
           <span className="loading loading-spinner loading-lg"></span>
+          <p className="text-sm opacity-70">
+            Procurando os melhores preços...
+          </p>
         </div>
       )}
 
-      {/* 🪟 Produtos */}
       <div className="bg-base-200 p-6 rounded-2xl shadow-inner max-h-[600px] overflow-y-auto">
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-
           {products.map((product) => {
-
             const favorite = isFavorite(product.permalink);
 
             return (
@@ -125,8 +150,6 @@ export default function PriceSearch() {
                 className="card bg-base-100 shadow-md cursor-pointer hover:scale-[1.02] transition relative"
                 onClick={() => setSelectedProduct(product)}
               >
-
-                {/* ❤️ Favorito */}
                 <button
                   className={`absolute top-3 right-3 btn btn-circle btn-sm z-10 ${
                     favorite ? "btn-error" : "btn-ghost"
@@ -142,7 +165,6 @@ export default function PriceSearch() {
                   />
                 </button>
 
-                {/* 🖼️ Imagem */}
                 <figure className="p-4">
                   <img
                     src={product.thumbnail}
@@ -151,9 +173,7 @@ export default function PriceSearch() {
                   />
                 </figure>
 
-                {/* 📄 Conteúdo */}
                 <div className="card-body p-4">
-
                   <h2 className="text-sm font-semibold line-clamp-2">
                     {product.title}
                   </h2>
@@ -166,7 +186,6 @@ export default function PriceSearch() {
                     {product.condition}
                   </p>
 
-                  {/* 🚀 Ações */}
                   <div
                     className="card-actions justify-end mt-2"
                     onClick={(e) => e.stopPropagation()}
@@ -186,20 +205,18 @@ export default function PriceSearch() {
           })}
         </div>
 
-        {/* 📭 Sem resultados */}
-        {!loading && products.length === 0 && (
-          <div className="text-center opacity-70">
-            Nenhum produto encontrado
-          </div>
-        )}
+        {!loading &&
+          products.length === 0 &&
+          !searchMessage && (
+            <div className="text-center opacity-70">
+              Nenhum produto encontrado
+            </div>
+          )}
       </div>
 
-      {/* 🧠 Modal */}
       {selectedProduct && (
         <div className="modal modal-open">
-
           <div className="modal-box max-w-2xl">
-
             <h3 className="font-bold text-lg mb-4">
               {selectedProduct.title}
             </h3>
@@ -211,7 +228,6 @@ export default function PriceSearch() {
             />
 
             <div className="space-y-2">
-
               <p>
                 <strong>Preço:</strong>{" "}
                 {selectedProduct.currencyId}{" "}
@@ -225,13 +241,13 @@ export default function PriceSearch() {
 
               <p>
                 <strong>Frete grátis:</strong>{" "}
-                {selectedProduct.freeShipping ? "Sim" : "Não"}
+                {selectedProduct.freeShipping
+                  ? "Sim"
+                  : "Não"}
               </p>
             </div>
 
             <div className="modal-action">
-
-              {/* ❤️ Favorito */}
               <button
                 className={`btn ${
                   isFavorite(selectedProduct.permalink)
@@ -239,17 +255,17 @@ export default function PriceSearch() {
                     : "btn-outline"
                 }`}
                 onClick={() =>
-                  handleToggleFavorite(selectedProduct.permalink)
+                  handleToggleFavorite(
+                    selectedProduct.permalink
+                  )
                 }
               >
                 <Heart size={18} />
-
                 {isFavorite(selectedProduct.permalink)
                   ? "Remover favorito"
                   : "Adicionar favorito"}
               </button>
 
-              {/* 🚀 Produto */}
               <a
                 href={selectedProduct.permalink}
                 target="_blank"
@@ -259,7 +275,6 @@ export default function PriceSearch() {
                 Ir para o produto
               </a>
 
-              {/* ❌ Fechar */}
               <button
                 className="btn"
                 onClick={() => setSelectedProduct(null)}
@@ -269,11 +284,10 @@ export default function PriceSearch() {
             </div>
           </div>
 
-          {/* Overlay */}
           <div
             className="modal-backdrop"
             onClick={() => setSelectedProduct(null)}
-          ></div>
+          />
         </div>
       )}
     </div>

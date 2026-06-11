@@ -1,4 +1,0 @@
-1. Mercado Livre API
-2. eBay API
-3. AliExpress API (Programa de Afiliados)
-4 Best Buy API (Talvez)

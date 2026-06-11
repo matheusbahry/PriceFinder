@@ -50,9 +50,6 @@ public class JWTUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    /**
-     * 🔹 Gera um token incluindo o email e o userId
-     */
     public String generateToken(String username, String userId, List<String> roles) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);

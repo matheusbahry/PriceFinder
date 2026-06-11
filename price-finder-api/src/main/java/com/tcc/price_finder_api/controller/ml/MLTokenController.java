@@ -11,8 +11,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-// Controller para gerenciar os tokens da api do mercado livre
-
 @RestController
 @RequiredArgsConstructor
 public class MLTokenController {

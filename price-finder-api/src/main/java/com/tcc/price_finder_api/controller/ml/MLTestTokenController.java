@@ -10,8 +10,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 
-// Controller temporario para gerenciar tokens pela api.
-// Vai ser excluida em produção
 
 @RestController
 @RequiredArgsConstructor

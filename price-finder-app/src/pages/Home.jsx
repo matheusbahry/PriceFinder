@@ -8,74 +8,101 @@ import { useAuthStore } from "../store/useAuthStore";
 import Navbar from "../components/Navbar";
 
 export default function Home() {
-
   const [query, setQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchMessage, setSearchMessage] = useState("");
 
   const {
     products,
     loading,
-    searchByKeyword
+    searchByKeyword,
   } = useProductStore();
 
   const {
     fetchFavorites,
     toggleFavorite,
-    isFavorite
+    isFavorite,
   } = useFavoriteStore();
 
-  // 🔐 Usuário autenticado
   const user = useAuthStore((state) => state.user);
-
-  // ✅ ID do usuário vindo do authStore
   const userId = user?.id;
 
   useEffect(() => {
-
-    // evita chamada sem login
     if (!userId) return;
 
     fetchFavorites(userId);
-
   }, [userId]);
 
   const handleSearch = async () => {
-
     if (!query) return;
 
-    await searchByKeyword(query);
+    const MAX_RETRIES = 15;
+
+    setSearchMessage("Buscando produtos...");
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        await searchByKeyword(query);
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, 500)
+        );
+
+        const currentProducts =
+          useProductStore.getState().products;
+
+        if (currentProducts.length > 0) {
+          setSearchMessage("");
+          return;
+        }
+
+        if (attempt < MAX_RETRIES) {
+          setSearchMessage(
+            `Nenhum resultado encontrado. Tentando novamente (${attempt}/${MAX_RETRIES})...`
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1000)
+      );
+    }
+
+    setSearchMessage(
+      "Não foi possível encontrar produtos para esta busca. Tente outro termo."
+    );
   };
 
-const handleToggleFavorite = async (
-  product
-) => {
+  const handleToggleFavorite = async (
+    product
+  ) => {
+    if (!userId) {
+      alert("Você precisa estar logado");
+      return;
+    }
 
-  console.log("PRODUTO:", product);
+    await toggleFavorite(
+      userId,
+      product.title,
+      product.permalink
+    );
+  };
 
-  console.log("TITLE:", product.title);
-
-  console.log("PERMALINK:", product.permalink);
-
-  await toggleFavorite(
-    user.id,
-    product.title,
-    product.permalink
-  );
-};
   return (
     <div className="p-6 space-y-6">
-
       <Navbar />
 
-      {/* 🔎 Busca */}
       <div className="flex gap-2 justify-center">
-
         <input
           type="text"
           placeholder="Buscar produto..."
           className="input input-bordered w-full max-w-md"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) =>
+            setQuery(e.target.value)
+          }
         />
 
         <button
@@ -86,46 +113,59 @@ const handleToggleFavorite = async (
         </button>
       </div>
 
-      {/* ⏳ Loading */}
-      {loading && (
-        <div className="flex justify-center">
-          <span className="loading loading-spinner loading-lg"></span>
+      {searchMessage && (
+        <div className="alert alert-info">
+          {searchMessage}
         </div>
       )}
 
-      {/* 🪟 Produtos */}
+      {loading && (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <span className="loading loading-spinner loading-lg"></span>
+          <p className="text-sm opacity-70">
+            Procurando os melhores preços...
+          </p>
+        </div>
+      )}
+
       <div className="bg-base-200 p-6 rounded-2xl shadow-inner max-h-[600px] overflow-y-auto">
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-
           {products.map((product) => {
-
-            const favorite = isFavorite(product.permalink);
+            const favorite = isFavorite(
+              product.permalink
+            );
 
             return (
               <div
                 key={product.id}
                 className="card bg-base-100 shadow-md cursor-pointer hover:scale-[1.02] transition relative"
-                onClick={() => setSelectedProduct(product)}
+                onClick={() =>
+                  setSelectedProduct(product)
+                }
               >
-
-                {/* ❤️ Favorito */}
                 <button
                   className={`absolute top-3 right-3 btn btn-circle btn-sm z-10 ${
-                    favorite ? "btn-error" : "btn-ghost"
+                    favorite
+                      ? "btn-error"
+                      : "btn-ghost"
                   }`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleToggleFavorite(product);
+                    handleToggleFavorite(
+                      product
+                    );
                   }}
                 >
                   <Heart
                     size={18}
-                    fill={favorite ? "currentColor" : "none"}
+                    fill={
+                      favorite
+                        ? "currentColor"
+                        : "none"
+                    }
                   />
                 </button>
 
-                {/* 🖼️ Imagem */}
                 <figure className="p-4">
                   <img
                     src={product.thumbnail}
@@ -134,25 +174,25 @@ const handleToggleFavorite = async (
                   />
                 </figure>
 
-                {/* 📄 Conteúdo */}
                 <div className="card-body p-4">
-
                   <h2 className="text-sm font-semibold line-clamp-2">
                     {product.title}
                   </h2>
 
                   <p className="text-lg font-bold text-primary">
-                    {product.currencyId} {product.price}
+                    {product.currencyId}{" "}
+                    {product.price}
                   </p>
 
                   <p className="text-xs opacity-70">
                     {product.condition}
                   </p>
 
-                  {/* 🚀 Ações */}
                   <div
                     className="card-actions justify-end mt-2"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) =>
+                      e.stopPropagation()
+                    }
                   >
                     <a
                       href={product.permalink}
@@ -169,20 +209,18 @@ const handleToggleFavorite = async (
           })}
         </div>
 
-        {/* 📭 Sem resultados */}
-        {!loading && products.length === 0 && (
-          <div className="text-center opacity-70">
-            Nenhum produto encontrado
-          </div>
-        )}
+        {!loading &&
+          products.length === 0 &&
+          !searchMessage && (
+            <div className="text-center opacity-70">
+              Nenhum produto encontrado
+            </div>
+          )}
       </div>
 
-      {/* 🧠 Modal */}
       {selectedProduct && (
         <div className="modal modal-open">
-
           <div className="modal-box max-w-2xl">
-
             <h3 className="font-bold text-lg mb-4">
               {selectedProduct.title}
             </h3>
@@ -194,7 +232,6 @@ const handleToggleFavorite = async (
             />
 
             <div className="space-y-2">
-
               <p>
                 <strong>Preço:</strong>{" "}
                 {selectedProduct.currencyId}{" "}
@@ -203,8 +240,12 @@ const handleToggleFavorite = async (
 
               {selectedProduct.originalPrice && (
                 <p className="line-through opacity-60">
-                  {selectedProduct.currencyId}{" "}
-                  {selectedProduct.originalPrice}
+                  {
+                    selectedProduct.currencyId
+                  }{" "}
+                  {
+                    selectedProduct.originalPrice
+                  }
                 </p>
               )}
 
@@ -215,31 +256,36 @@ const handleToggleFavorite = async (
 
               <p>
                 <strong>Frete grátis:</strong>{" "}
-                {selectedProduct.freeShipping ? "Sim" : "Não"}
+                {selectedProduct.freeShipping
+                  ? "Sim"
+                  : "Não"}
               </p>
             </div>
 
             <div className="modal-action">
-
-              {/* ❤️ Favorito */}
               <button
                 className={`btn ${
-                  isFavorite(selectedProduct.permalink)
+                  isFavorite(
+                    selectedProduct.permalink
+                  )
                     ? "btn-error"
                     : "btn-outline"
                 }`}
                 onClick={() =>
-                  handleToggleFavorite(selectedProduct)
+                  handleToggleFavorite(
+                    selectedProduct
+                  )
                 }
               >
                 <Heart size={18} />
 
-                {isFavorite(selectedProduct.permalink)
+                {isFavorite(
+                  selectedProduct.permalink
+                )
                   ? "Remover favorito"
                   : "Adicionar favorito"}
               </button>
 
-              {/* 🚀 Produto */}
               <a
                 href={selectedProduct.permalink}
                 target="_blank"
@@ -249,21 +295,23 @@ const handleToggleFavorite = async (
                 Ir para o produto
               </a>
 
-              {/* ❌ Fechar */}
               <button
                 className="btn"
-                onClick={() => setSelectedProduct(null)}
+                onClick={() =>
+                  setSelectedProduct(null)
+                }
               >
                 Fechar
               </button>
             </div>
           </div>
 
-          {/* Overlay */}
           <div
             className="modal-backdrop"
-            onClick={() => setSelectedProduct(null)}
-          ></div>
+            onClick={() =>
+              setSelectedProduct(null)
+            }
+          />
         </div>
       )}
     </div>

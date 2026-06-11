@@ -3,21 +3,34 @@ package com.tcc.price_finder_api.service.ebay;
 import com.tcc.price_finder_api.dto.ebay.EbayItemSummary;
 import com.tcc.price_finder_api.dto.ebay.EbaySearchResponse;
 import com.tcc.price_finder_api.model.Product;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.List;
 
 @Service
 public class EbayProductService {
 
     private final WebClient webClient;
     private final EbayAuthService authService;
+
+    /**
+     * Path relativo ao baseUrl "https://api.ebay.com":
+     * ebay.url.buy-search=/buy/browse/v1/item_summary/search
+     */
+    @Value("${ebay.url.buy-search}")
+    private String BASE_SEARCH;
+
+    /**
+     * Path relativo ao baseUrl "https://api.ebay.com":
+     * ebay.url.browse-iten=/buy/browse/v1/item/
+     */
+    @Value("${ebay.url.browse-iten}")
+    private String BASE_ITEMS;
 
     public EbayProductService(
             @Qualifier("ebayWebClient") WebClient webClient,
@@ -27,15 +40,7 @@ public class EbayProductService {
         this.authService = authService;
     }
 
-    private static final String BASE_SEARCH =
-            "/buy/browse/v1/item_summary/search";
-
-    // ===============================
-    // 🔎 Buscar por palavra-chave
-    // ===============================
-
     public Flux<Product> searchByKeyword(String keyword) {
-
         return authService.getValidToken()
                 .flatMapMany(token ->
                         webClient.get()
@@ -52,18 +57,8 @@ public class EbayProductService {
                 .map(this::mapToProduct);
     }
 
-    // ===============================
-    // 💰 Buscar por faixa de preço
-    // ===============================
-
-    public Flux<Product> searchByPriceRange(
-            String keyword,
-            double min,
-            double max
-    ) {
-
+    public Flux<Product> searchByPriceRange(String keyword, double min, double max) {
         String filter = "price:[" + min + ".." + max + "],priceCurrency:USD";
-
         return authService.getValidToken()
                 .flatMapMany(token ->
                         webClient.get()
@@ -81,15 +76,7 @@ public class EbayProductService {
                 .map(this::mapToProduct);
     }
 
-    // ===============================
-    // ⭐ Buscar ordenado
-    // ===============================
-
-    public Flux<Product> searchSorted(
-            String keyword,
-            String sort // price, -price, bestMatch, newlyListed
-    ) {
-
+    public Flux<Product> searchSorted(String keyword, String sort) {
         return authService.getValidToken()
                 .flatMapMany(token ->
                         webClient.get()
@@ -107,16 +94,11 @@ public class EbayProductService {
                 .map(this::mapToProduct);
     }
 
-    // ===============================
-    // 🆔 Buscar detalhes por ID
-    // ===============================
-
     public Mono<Product> getById(String itemId) {
-
         return authService.getValidToken()
                 .flatMap(token ->
                         webClient.get()
-                                .uri("/buy/browse/v1/item/" + itemId)
+                                .uri(BASE_ITEMS + itemId)
                                 .headers(h -> h.setBearerAuth(token))
                                 .retrieve()
                                 .bodyToMono(EbayItemSummary.class)
@@ -124,21 +106,14 @@ public class EbayProductService {
                 .map(this::mapToProduct);
     }
 
-    // ===============================
-    // 🧠 Conversão DTO → Entity
-    // ===============================
-
     private Product mapToProduct(EbayItemSummary item) {
-
         return Product.builder()
                 .id(item.itemId())
                 .title(item.title())
                 .price(item.price().value())
                 .currencyId(item.price().currency())
                 .permalink(item.itemWebUrl())
-                .thumbnail(item.image() != null
-                        ? item.image().imageUrl()
-                        : null)
+                .thumbnail(item.image() != null ? item.image().imageUrl() : null)
                 .condition(item.condition())
                 .availableQuantity(null)
                 .sellerId(null)
@@ -146,9 +121,7 @@ public class EbayProductService {
                 .freeShipping(
                         item.shippingOptions() != null &&
                                 item.shippingOptions().stream()
-                                        .anyMatch(s ->
-                                                Boolean.TRUE.equals(
-                                                        s.freeShipping()))
+                                        .anyMatch(s -> Boolean.TRUE.equals(s.freeShipping()))
                 )
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())

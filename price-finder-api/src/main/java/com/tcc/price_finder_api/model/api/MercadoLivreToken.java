@@ -7,8 +7,6 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-// Classe que representa o token do mercado livre
-
 @Data
 @Table("mercado_livre_token")
 public class MercadoLivreToken {
